@@ -35,6 +35,7 @@ This document outlines the specifications for a simple, personal task manager ap
    8. Use podman machine rm instead of docker machine rm
    9. Use podman machine inspect instead of docker machine inspect
    10. Use podman machine list instead of docker machine list    
+8.  No mocking. All real
 
 
 ## 1. Overview
