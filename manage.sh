@@ -19,6 +19,11 @@ function show_help {
     echo "  ui-start    Start only the frontend UI"
     echo "  ui-stop     Stop only the frontend UI"
     echo "  setup       Setup the conda environment and initial configuration"
+    echo "  setup-ui    Setup the frontend UI dependencies (requires Node.js)"
+    echo "  test        Run all tests"
+    echo "  test-api    Run API tests"
+    echo "  test-db     Run database tests"
+    echo "  test-ui     Run frontend UI tests"
     echo "  help        Show this help message"
 }
 
@@ -47,12 +52,13 @@ case "$1" in
         cd src/api && conda run -n taskmgr uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
         cd "$OLDPWD"
         echo "Starting frontend UI..."
-        # Frontend start commands will be added later
+        cd src/frontend/task-manager-ui && npm start &
+        cd "$OLDPWD"
         ;;
     stop)
         echo "Stopping all services..."
         echo "Stopping frontend UI..."
-        # Frontend stop commands will be added later
+        pkill -f "node.*start" || echo "No UI service running"
         echo "Stopping API service..."
         pkill -f "uvicorn main:app" || echo "No API service running"
         echo "Stopping database container..."
@@ -96,11 +102,11 @@ case "$1" in
         ;;
     ui-start)
         echo "Starting frontend UI..."
-        # Frontend start commands will be added later
+        cd src/frontend/task-manager-ui && npm start
         ;;
     ui-stop)
         echo "Stopping frontend UI..."
-        # Frontend stop commands will be added later
+        pkill -f "node.*start" || echo "No UI service running"
         ;;
     setup)
         echo "Setting up the environment..."
@@ -112,18 +118,73 @@ case "$1" in
         
         # Install dependencies for each component
         echo "Installing API dependencies..."
-        conda run -n taskmgr pip install -r src/api/requirements.txt
+        conda run -n taskmgr pip install fastapi uvicorn sqlalchemy psycopg2-binary pydantic python-dotenv pytest
         
         echo "Installing DB dependencies..."
-        conda run -n taskmgr pip install -r src/db/requirements.txt
-        
-        echo "Installing frontend dependencies..."
-        conda run -n taskmgr pip install -r src/frontend/requirements.txt
+        conda run -n taskmgr pip install sqlalchemy psycopg2-binary alembic
         
         # Start the database
         echo "Setting up the database..."
         $0 db-start
+        
+        echo "\nBackend setup complete!"
+        echo "To set up the frontend UI, run: ./manage.sh setup-ui"
         ;;
+    setup-ui)
+        echo "Setting up the frontend UI..."
+        
+        # Check if Node.js is installed
+        if ! command -v node &> /dev/null; then
+            echo "Error: Node.js is not installed. Please install Node.js (v14 or higher) and npm."
+            echo "Visit https://nodejs.org/ for installation instructions."
+            exit 1
+        fi
+        
+        # Check Node.js version
+        NODE_VERSION=$(node -v | cut -d 'v' -f 2 | cut -d '.' -f 1)
+        if [ "$NODE_VERSION" -lt 14 ]; then
+            echo "Error: Node.js version 14 or higher is required. Current version: $(node -v)"
+            echo "Please upgrade Node.js and try again."
+            exit 1
+        fi
+        
+        echo "Installing frontend dependencies..."
+        cd src/frontend/task-manager-ui && npm install
+        cd "$OLDPWD"
+        
+        echo "\nFrontend UI setup complete!"
+        echo "To start all services, run: ./manage.sh start"
+        ;;
+        
+    test)
+        echo "Running all tests..."
+        echo "\n=== Database Tests ==="
+        conda run -n taskmgr pytest -v src/db/tests/
+        
+        echo "\n=== API Tests ==="
+        conda run -n taskmgr pytest -v src/api/tests/
+        
+        echo "\n=== UI Tests ==="
+        cd src/frontend/task-manager-ui && npm test -- --watchAll=false
+        cd "$OLDPWD"
+        ;;
+        
+    test-db)
+        echo "Running database tests..."
+        conda run -n taskmgr pytest -v src/db/tests/
+        ;;
+        
+    test-api)
+        echo "Running API tests..."
+        conda run -n taskmgr pytest -v src/api/tests/
+        ;;
+        
+    test-ui)
+        echo "Running UI tests..."
+        cd src/frontend/task-manager-ui && npm test -- --watchAll=false
+        cd "$OLDPWD"
+        ;;
+        
     help)
         show_help
         ;;
