@@ -8,7 +8,8 @@ from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+from contextlib import asynccontextmanager
 
 # Add the parent directory to the path to import the db package
 sys.path.append(str(Path(__file__).parent.parent))
@@ -17,11 +18,21 @@ from db.database import get_db, init_db
 from db.repository import TaskRepository
 from db.models import Task
 
-# Create FastAPI app
+# Initialize database on startup using lifespan
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan events for the application."""
+    # Startup: initialize the database
+    init_db()
+    yield
+    # Shutdown: cleanup can be done here if needed
+
+# Create FastAPI app with lifespan
 app = FastAPI(
     title="Task Manager API",
     description="API for managing tasks in the Task Manager application",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
@@ -59,17 +70,11 @@ class TaskResponse(TaskBase):
     completed: bool = Field(..., description="Whether the task is completed")
     created_at: datetime = Field(..., description="When the task was created")
     updated_at: datetime = Field(..., description="When the task was last updated")
+    
+    # Use ConfigDict instead of class Config
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        """Pydantic config."""
-        orm_mode = True
-        from_attributes = True
 
-# Initialize database on startup
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database on startup."""
-    init_db()
 
 # API endpoints
 @app.get("/tasks", response_model=List[TaskResponse], tags=["tasks"])
