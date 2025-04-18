@@ -44,7 +44,8 @@ case "$1" in
         echo "Starting database container..."
         podman-compose -f "$(pwd)/src/db/podman-compose.yml" up -d
         echo "Starting API service..."
-        # API start commands will be added later
+        cd src/api && conda run -n taskmgr uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+        cd "$OLDPWD"
         echo "Starting frontend UI..."
         # Frontend start commands will be added later
         ;;
@@ -53,7 +54,7 @@ case "$1" in
         echo "Stopping frontend UI..."
         # Frontend stop commands will be added later
         echo "Stopping API service..."
-        # API stop commands will be added later
+        pkill -f "uvicorn main:app" || echo "No API service running"
         echo "Stopping database container..."
         podman-compose -f "$(pwd)/src/db/podman-compose.yml" down
         ;;
@@ -85,11 +86,13 @@ case "$1" in
         ;;
     api-start)
         echo "Starting API service..."
-        # API start commands will be added later
+        check_podman_machine
+        cd src/api && conda run -n taskmgr uvicorn main:app --host 0.0.0.0 --port 8000 --reload
         ;;
     api-stop)
         echo "Stopping API service..."
-        # API stop commands will be added later
+        # Find and kill the uvicorn process
+        pkill -f "uvicorn main:app" || echo "No API service running"
         ;;
     ui-start)
         echo "Starting frontend UI..."
