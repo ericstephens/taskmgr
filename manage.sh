@@ -24,6 +24,8 @@ function show_help {
     echo "  test-api    Run API tests"
     echo "  test-db     Run database tests"
     echo "  test-ui     Run frontend UI tests"
+    echo "  otel-start  Start the OpenTelemetry collector and Jaeger"
+    echo "  otel-stop   Stop the OpenTelemetry collector and Jaeger"
     echo "  help        Show this help message"
 }
 
@@ -112,16 +114,9 @@ case "$1" in
         echo "Setting up the environment..."
         check_podman_machine
         
-        # Create conda environment
-        echo "Creating conda environment 'taskmgr'..."
-        conda create -n taskmgr python=3.11 -y
-        
-        # Install dependencies for each component
-        echo "Installing API dependencies..."
-        conda run -n taskmgr pip install fastapi uvicorn sqlalchemy psycopg2-binary pydantic python-dotenv pytest
-        
-        echo "Installing DB dependencies..."
-        conda run -n taskmgr pip install sqlalchemy psycopg2-binary alembic
+        # Create conda environment from environment.yml
+        echo "Creating conda environment 'taskmgr' from environment.yml..."
+        conda env create -f environment.yml
         
         # Start the database
         echo "Setting up the database..."
@@ -185,6 +180,16 @@ case "$1" in
         cd "$OLDPWD"
         ;;
         
+    otel-start)
+        echo "Starting OpenTelemetry collector and Jaeger..."
+        check_podman_machine
+        podman-compose -f "$(pwd)/otel-collector.yml" up -d
+        echo "OpenTelemetry collector started. Jaeger UI available at: http://localhost:16686"
+        ;;
+    otel-stop)
+        echo "Stopping OpenTelemetry collector and Jaeger..."
+        podman-compose -f "$(pwd)/otel-collector.yml" down
+        ;;
     help)
         show_help
         ;;

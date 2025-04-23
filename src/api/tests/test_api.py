@@ -5,15 +5,31 @@ import json
 from datetime import datetime, timedelta, UTC
 import pytest
 from fastapi.testclient import TestClient
+from opentelemetry import trace
+
+# Import our OpenTelemetry plugin to ensure it's loaded
+import api.tests.pytest_otel_plugin
 
 def test_get_tasks(client):
     """Test getting all tasks."""
-    response = client.get("/tasks")
-    assert response.status_code == 200
-    tasks = response.json()
-    assert isinstance(tasks, list)
-    # We should have at least the sample tasks from init.sql
-    assert len(tasks) >= 5
+    # Get the tracer
+    tracer = trace.get_tracer("api_tests")
+    
+    # Create a span for this test
+    with tracer.start_as_current_span("test_get_tasks") as span:
+        # Execute the test
+        response = client.get("/tasks")
+        
+        # Add attributes to the span
+        span.set_attribute("http.status_code", response.status_code)
+        span.set_attribute("tasks.count", len(response.json()))
+        
+        # Assertions
+        assert response.status_code == 200
+        tasks = response.json()
+        assert isinstance(tasks, list)
+        # We should have at least the sample tasks from init.sql
+        assert len(tasks) >= 5
 
 def test_get_tasks_filtered_by_completed(client):
     """Test getting tasks filtered by completion status."""
