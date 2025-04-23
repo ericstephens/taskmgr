@@ -1,7 +1,7 @@
 """
 Database models for the Task Manager application.
 """
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
 from sqlalchemy.orm import declarative_base
@@ -23,8 +23,8 @@ class Task(Base):
     due_date = Column(DateTime, nullable=True)
     priority = Column(String(20), nullable=True)
     completed = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(UTC))
+    updated_at = Column(DateTime, default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC))
 
     def __repr__(self):
         return f"<Task(id={self.id}, title='{self.title}', priority={self.priority}, completed={self.completed})>"

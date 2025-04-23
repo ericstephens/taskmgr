@@ -2,13 +2,13 @@
 Unit tests for the database models.
 """
 import pytest
-from datetime import datetime
+from datetime import datetime, UTC
 from db.models import Task, PriorityLevel
 
 def test_task_model_creation():
     """Test creating a Task model instance."""
     # Create a task with all fields
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     task = Task(
         id=1,
         title="Test Task",
@@ -45,7 +45,7 @@ def test_task_model_representation():
 def test_task_to_dict():
     """Test converting a Task model to a dictionary."""
     # Create a task with all fields
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     task = Task(
         id=1,
         title="Test Task",

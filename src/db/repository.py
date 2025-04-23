@@ -2,7 +2,7 @@
 Repository module for database operations.
 """
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, UTC
 from sqlalchemy.orm import Session
 from .models import Task, PriorityLevel
 

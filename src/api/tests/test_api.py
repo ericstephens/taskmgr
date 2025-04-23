@@ -2,7 +2,7 @@
 Tests for the Task Manager API endpoints.
 """
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import pytest
 from fastapi.testclient import TestClient
 
@@ -59,7 +59,7 @@ def test_create_task(client):
     task_data = {
         "title": "Test Task",
         "description": "This is a test task created by the API test",
-        "due_date": (datetime.utcnow() + timedelta(days=1)).isoformat(),
+        "due_date": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
         "priority": "Medium"
     }
     

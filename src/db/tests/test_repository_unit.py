@@ -3,7 +3,7 @@ Unit tests for the TaskRepository class that mock the database session.
 """
 import pytest
 from unittest.mock import MagicMock, patch
-from datetime import datetime
+from datetime import datetime, UTC
 from db.repository import TaskRepository
 from db.models import Task
 
@@ -25,11 +25,11 @@ def sample_task():
         id=1,
         title="Test Task",
         description="This is a test task",
-        due_date=datetime.utcnow(),
+        due_date=datetime.now(UTC),
         priority="High",
         completed=False,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow()
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC)
     )
 
 def test_get_all_tasks(task_repository, mock_db_session, sample_task):

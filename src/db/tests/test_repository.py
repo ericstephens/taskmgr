@@ -4,7 +4,7 @@ Test module for the task repository.
 import sys
 import os
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -76,7 +76,7 @@ def test_create_task(task_repository):
     # Create a new task
     title = "Test Task"
     description = "This is a test task"
-    due_date = datetime.utcnow() + timedelta(days=1)
+    due_date = datetime.now(UTC) + timedelta(days=1)
     priority = "Medium"
     
     task = task_repository.create_task(
@@ -90,7 +90,8 @@ def test_create_task(task_repository):
     assert task.id is not None
     assert task.title == title
     assert task.description == description
-    assert task.due_date == due_date
+    # Compare datetime values without timezone info since SQLAlchemy may store as timezone-naive
+    assert task.due_date.replace(tzinfo=None) == due_date.replace(tzinfo=None)
     assert task.priority == priority
     assert task.completed is False
 
